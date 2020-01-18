@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>CRUD APP</title>
+</head>
+<style>
+    body{
+    text-align: center;
+    margin: auto
+    }
+    h4{width: 200px; height:50px; margin:auto;}
+    ul{list-style-type:none; margin: 100px 0; padding:0}
+    li{margin:0; padding:0}
+
+</style>
+<body>
+<h1>CRUD APP</h1>
+<h4>{{message}}</h4>
+<ul>
+    <li><a href="{{ url_for('create_all') }}" >create_all </a> (the db.create_all method)</li>
+    <li><a href="{{ url_for('drop_all') }}" >drop_all</a> (the db.drop_all method)</li>
+    <li><a href="{{ url_for('add_student') }}" >add_student</a></li>
+    <li><a href="{{ url_for('add_nicknames_to_student') }}" >add_nicknames_to_student</a></li>
+    <li><a href="{{ url_for('select_student') }}" >select_student</a></li>
+    <li><a href="{{ url_for('update_student') }}" >update_student</a></li>
+</ul>
+
+
+</body>
+</html>
