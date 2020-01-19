@@ -25,7 +25,7 @@
     <li><a href="{{ url_for('create_all') }}" >create_all </a>
         <br>(the db.create_all method)
     </li>
-    <li><a href="{{ url_for('add_students') }}" >add_student</a><br>(add:
+    <li><a href="{{ url_for('add_students') }}" >add_students</a><br>(add:
         name=Joe, age=21, email=joe@weber.edu, nicknames=[]<br>
         name=Mary, age=22, email=mary@weber.edu, nicknames=['Maria'])<br>
     </li>
@@ -44,7 +44,19 @@
     <li><a href="{{ url_for('select_students') }}" >select_students</a>
         <br>Show all the records in the db
     </li>
-
+    <li><a href="{{ url_for('add_courses') }}" >add_courses</a>
+        <br>Add two courses: Anthro 1000 and English 1100
+    </li>
+    <li><a href="{{ url_for('enroll_students') }}" >enroll_students</a>
+        <br>Enroll Joe in Anthro and English, Enroll Maria in in Anthro
+    </li>
+        <li><a href="{{ url_for('show_course_enrollments') }}" >show_course_enrollments</a>
+        <br>Show enrollments in Anthro and English
+    </li>
+    </li>
+        <li><a href="{{ url_for('show_student_enrollments') }}" >show_student_enrollments</a>
+        <br>Show enrollments for Joe
+    </li>
 </ul>
 
 

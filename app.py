@@ -8,6 +8,29 @@ db = SQLAlchemy(app)
 
 
 # Define the Role data-model
+class Course(db.Model):
+    __tablename__ = 'courses'
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+    # Define the relationship to Student via StudentCourses
+    students = db.relationship('Student', secondary='student_courses')
+
+    def __str__(self):
+
+        students = "["
+        for stud in self.students:
+            students = students + stud.name + ','
+        students = students + "]"
+        string_object = str(self.id) + "|" + str(self.name) +"|" + students
+        return string_object
+
+# Define the UserRoles association table
+class StudentCourses(db.Model):
+    __tablename__ = 'student_courses'
+    id = db.Column(db.Integer(), primary_key=True)
+    course_id = db.Column(db.Integer(), db.ForeignKey('courses.id', ondelete='CASCADE'))
+    student_id = db.Column(db.Integer(), db.ForeignKey('student.id', ondelete='CASCADE'))
+
 class Student(db.Model):
     __tablename__ = 'student'
     id = db.Column(db.Integer(), primary_key=True)
@@ -16,13 +39,20 @@ class Student(db.Model):
     age = db.Column(db.Integer())
     student_nick_names = db.relationship("StudentNickName", backref='student', cascade='all')
 
+    # Define the relationship to Course via StudentCourses
+    courses = db.relationship('Course', secondary='student_courses')
+
     def __str__(self):
 
         nick_names = "["
         for nick in self.student_nick_names:
             nick_names = nick_names + nick.nick_name + ','
         nick_names = nick_names + "]"
-        string_object = str(self.id) + "|" + str(self.name) +"|" + str(self.email) + "|" + str(self.age) + "|" + nick_names
+        courses = "["
+        for course in self.courses:
+            courses = courses + course.name + ','
+        courses = courses + "]"
+        string_object = str(self.id) + "|" + str(self.name) +"|" + str(self.email) + "|" + str(self.age) + "|" + nick_names + "|" + courses
         return string_object
 
 # Define the UserRoles association table
@@ -119,4 +149,49 @@ def delete_student():
     db.session.delete(joe)
     db.session.commit()
     message = "Joe deleted from DB"
+    return render_template('index.html', message=message)
+
+@app.route('/add_courses')
+def add_courses():
+    course1 = Course(name="Anthro 1000")
+    db.session.add(course1)
+    course2 = Course(name="English 1100")
+    db.session.add(course2)
+
+    db.session.commit()
+    message = "Two courses added to DB"
+    return render_template('index.html', message=message)
+
+@app.route('/enroll_students')
+def enroll_students():
+    anthro = Course.query.filter(Course.name == 'Anthro 1000').first()
+    english = Course.query.filter(Course.name == 'English 1100').first()
+    joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
+    mary = Student.query.filter(Student.email == 'mary@weber.edu').first()
+    anthro.students.append(joe)
+    english.students.append(joe)
+    anthro.students.append(mary)
+    db.session.add(anthro)
+    db.session.add(english)
+
+    db.session.commit()
+    message = "Two courses added to DB"
+    return render_template('index.html', message=message)
+
+
+@app.route('/show_course_enrollments')
+def show_course_enrollments():
+    anthro = Course.query.filter(Course.name == 'Anthro 1000').first()
+    english = Course.query.filter(Course.name == 'English 1100').first()
+
+    message = "Course Enrollments:<br>" + str(anthro) + "<br>" + str(english)
+    return render_template('index.html', message=message)
+
+@app.route('/show_student_enrollments')
+def show_student_enrollments():
+    joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
+    courses = ""
+    for course in joe.courses:
+        courses = courses + str(course.name) +  ","
+    message = "Joe is enrolled in:<br> " + courses
     return render_template('index.html', message=message)
