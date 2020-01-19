@@ -22,7 +22,6 @@ class Student(db.Model):
         for nick in self.student_nick_names:
             nick_names = nick_names + nick.nick_name + ','
         nick_names = nick_names + "]"
-        #string_object = str(self.id)  + "|" + str(self.name)  + "|" + str(self.age)  + "|" +str(self.student_nick_names)
         string_object = str(self.id) + "|" + str(self.name) +"|" + str(self.email) + "|" + str(self.age) + "|" + nick_names
         return string_object
 
@@ -62,10 +61,6 @@ def drop_all():
 @app.route('/add_students')
 def add_students():
     joe = Student(name='Joe',email="joe@weber.edu",age=21)
-    # nickname_1 = StudentNickName(nick_name="Jo Jo")
-    # nickname_2 = StudentNickName(nick_name="Joey")
-    # joe.student_nick_names.append(nickname_1)
-    # joe.student_nick_names.append(nickname_2)
     db.session.add(joe)
     db.session.commit()
 
@@ -105,12 +100,6 @@ def update_student():
 @app.route('/select_student')
 def select_student():
     joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    # print(joe)
-    # query_results = ""
-    # query_results = query_results + joe.name + " AKA: "
-    # for nicknames in joe.student_nick_names:
-    #     query_results = query_results + " " + nicknames.nick_name
-    # message = "Query Results: " + query_results
     message = "Query Results:<br> " + str(joe)
     return render_template('index.html', message=message)
 
