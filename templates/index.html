@@ -10,21 +10,41 @@
     text-align: center;
     margin: auto
     }
-    h4{width: 200px; height:50px; margin:auto;}
+    h4{width: 300px; height:50px; margin:auto;}
     ul{list-style-type:none; margin: 100px 0; padding:0}
-    li{margin:0; padding:0}
+    li{margin:10px 0; padding:0}
 
 </style>
 <body>
 <h1>CRUD APP</h1>
-<h4>{{message}}</h4>
+<h4>{{message|safe}}</h4>
 <ul>
-    <li><a href="{{ url_for('create_all') }}" >create_all </a> (the db.create_all method)</li>
-    <li><a href="{{ url_for('drop_all') }}" >drop_all</a> (the db.drop_all method)</li>
-    <li><a href="{{ url_for('add_student') }}" >add_student</a></li>
-    <li><a href="{{ url_for('add_nicknames_to_student') }}" >add_nicknames_to_student</a></li>
-    <li><a href="{{ url_for('select_student') }}" >select_student</a></li>
-    <li><a href="{{ url_for('update_student') }}" >update_student</a></li>
+    <li><a href="{{ url_for('drop_all') }}" >drop_all</a>
+        <br>(the db.drop_all method)
+    </li>
+    <li><a href="{{ url_for('create_all') }}" >create_all </a>
+        <br>(the db.create_all method)
+    </li>
+    <li><a href="{{ url_for('add_students') }}" >add_student</a><br>(add:
+        name=Joe, age=21, email=joe@weber.edu, nicknames=[]<br>
+        name=Mary, age=22, email=mary@weber.edu, nicknames=['Maria'])<br>
+    </li>
+    <li><a href="{{ url_for('add_nicknames_to_student') }}" >add_nicknames_to_student</a>
+    <br>(add nicknames Jojo and Joey to the student named Joe)
+    </li>
+    <li><a href="{{ url_for('update_student') }}" >update_student</a>
+    <br>(Change Joe's name to Joseph in the record with email joe@weber.edu)
+    </li>
+    <li><a href="{{ url_for('delete_student') }}" >delete_student</a>
+    <br>(Delete the record with the email named joe@weber.edu)
+    </li>
+    <li><a href="{{ url_for('select_student') }}" >select_student</a>
+        <br>Show the full record of the student with the email joe@weber.edu
+    </li>
+    <li><a href="{{ url_for('select_students') }}" >select_students</a>
+        <br>Show all the records in the db
+    </li>
+
 </ul>
 
 
