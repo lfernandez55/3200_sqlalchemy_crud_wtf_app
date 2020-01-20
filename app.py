@@ -190,6 +190,10 @@ def show_course_enrollments():
 @app.route('/show_student_enrollments')
 def show_student_enrollments():
     joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
+    if joe is None:
+        print('none type object')
+    else:
+        print('Not none')
     courses = ""
     for course in joe.courses:
         courses = courses + str(course.name) +  ","
