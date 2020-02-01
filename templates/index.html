@@ -23,7 +23,15 @@ margin-bottom: 15px; border: 1px solid black;
 </style>
 <body>
 <h1>SQLAlchemy Practice</h1>
-
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 <div>
        <ul>
         <li><a href="{{ url_for('drop_all') }}" >drop_all</a>
@@ -33,8 +41,10 @@ margin-bottom: 15px; border: 1px solid black;
             <br>(the db.create_all method)
         </li>
         <li><a href="{{ url_for('add_students') }}" >add_students</a><br>(add:
-            name=Joe, age=21, email=joe@weber.edu, nicknames=[]<br>
-            name=Mary, age=22, email=mary@weber.edu, nicknames=['Maria'])<br>
+            student without nicknames)<br>
+        </li>
+        <li><a href="{{ url_for('add_students_with_nn_option') }}" >add_students_with_nn_option</a><br>(add:
+            student with nicknames)<br>
         </li>
         <li><a href="{{ url_for('add_nicknames_to_student') }}" >add_nicknames_to_student</a>
         <br>(add nicknames Jojo and Joey to the student named Joe)

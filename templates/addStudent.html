@@ -1,0 +1,17 @@
+{% from "_formhelpers.html" import render_field %}
+<html>
+<head>
+<title>WTForms</title>
+</head>
+<body>
+	<form method="POST" >
+	   <dl>
+	    {{ form.csrf_token }}
+	    {{ render_field(form.name) }}
+	    {{ render_field(form.email) }}
+        {{ render_field(form.age) }}
+	    <input type="submit" value="Add Student">
+	    </dl>
+	</form>
+</body>
+</html>

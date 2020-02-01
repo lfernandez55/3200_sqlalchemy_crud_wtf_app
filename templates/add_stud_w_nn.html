@@ -1,0 +1,31 @@
+{% from "_formhelpers.html" import render_field %}
+
+<form action="{{ url_for('add_students_with_nn_option') }}" method="post" id="parentForm">
+    {{ form.csrf_token }}
+    {# the above could also be: {{ form.hidden_tag() }} #}
+
+    <fieldset>
+        <legend>Student Info</legend>
+        {{ render_field(form.name) }}
+        {{ render_field(form.email) }}
+        {{ render_field(form.age) }}
+        {#
+        {{ form.name.label }} {{ form.name }}
+        {{ form.email.label }} {{ form.email }}
+        {{ form.age.label }} {{ form.age }}
+        #}
+    </fieldset>
+
+    <fieldset>
+    <legend>Student Nick Names</legend>
+    {% for childform in form.student_nick_names %}
+        {% for field in childform %}
+            {% if field.short_name == "nick_name" %}
+        <div>{{ field.label }} {{ field }}</div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    {{ form.add_nickname }}
+    </fieldset>
+    {{ form.submit }}
+</form>

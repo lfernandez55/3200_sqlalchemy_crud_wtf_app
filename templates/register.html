@@ -1,0 +1,16 @@
+<form action="{{ url_for('register') }}" method="post" id="parentForm">
+    {{ form.hidden_tag() }}
+    {{ form.name.label }} {{ form.name }}
+
+    {{ form.add_child }}
+
+    {% for childform in form.children %}
+
+        {% for field in childform %}
+            {{ field.label }} {{ field }}   
+        {% endfor %}
+
+    {% endfor %}
+
+    {{ form.submit }}
+</form>

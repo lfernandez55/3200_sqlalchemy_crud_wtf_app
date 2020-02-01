@@ -1,5 +1,9 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_wtf import Form, FlaskForm
+from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField
+from wtforms.validators import InputRequired
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -33,7 +37,7 @@ class StudentCourses(db.Model):
 class Student(db.Model):
     __tablename__ = 'student'
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), unique=True)
+    name = db.Column(db.String(50), )
     email = db.Column(db.String(50), unique=True)
     age = db.Column(db.Integer())
     student_nick_names = db.relationship("StudentNickName", backref='student', cascade='all')
@@ -58,16 +62,64 @@ class Student(db.Model):
 class StudentNickName(db.Model):
     __tablename__ = 'student_nick_name'
     id = db.Column(db.Integer(), primary_key=True)
-    nick_name = db.Column(db.String(50), unique=True)
+    nick_name = db.Column(db.String(50))
     student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'))
 
     def __str__(self):
         string_object = nick_name
         return string_object
 
+#Forms Section
+
+class StudentNickNameForm(Form):
+    id = IntegerField('id')
+    nick_name = StringField('nick_name', validators=[InputRequired()])
+    class Meta:
+        # No need for csrf token in this child form
+        csrf = False
+
+def email_at_check(form, field):
+    if '@' not in field.data:
+        raise ValidationError('Email must contain an @')
+def email_unique(form, field):
+    stud = Student.query.filter(Student.email == field.data).first()
+    print('zzzzzz',stud)
+    if stud is not None:
+        raise ValidationError('Not a unique email address')
+
+class StudentForm(Form):
+    id = IntegerField('id')
+    name = StringField('name', validators=[InputRequired()])
+    email = StringField('email', validators=[InputRequired(), email_at_check, email_unique])
+    age = IntegerField('age', validators=[InputRequired()])
+    # student_nick_names = StringField('student_nick_names', validators=[InputRequired()])
+    student_nick_names = FieldList(FormField(StudentNickNameForm), label='Nicknames', min_entries=1)
+    add_nickname = SubmitField(label='Add More Nicknames')
+
+    submit = SubmitField()
+
+
+# https://stackoverflow.com/questions/49066046/append-entry-to-fieldlist-with-flask-wtforms-using-ajax
+class ChildForm(FlaskForm):
+
+    name = StringField(label='Name child')
+    age = IntegerField(label='Age child')
+
+    class Meta:
+        # No need for csrf token in this child form
+        csrf = False
+
+class ParentForm(FlaskForm):
+
+    name = StringField(label='Name parent')
+    children = FieldList(FormField(ChildForm), label='Children')
+    add_child = SubmitField(label='Add child')
+
+    submit = SubmitField()
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=True)
-
 
 @app.route('/')
 def home_page():
@@ -87,21 +139,71 @@ def drop_all():
     message = "DB Dropped!!)"
     return render_template('index.html', message=message)
 
-@app.route('/add_students')
+@app.route('/add_students', methods={'GET','POST'})
 def add_students():
-    joe = Student(name='Joe',email="joe@weber.edu",age=21)
-    db.session.add(joe)
-    db.session.commit()
+    form = StudentForm()
+    if form.validate_on_submit():
+        print("dddddddd", form.name, form.email, form.age)
+        studObj = Student(name=form.name.data, email=form.email.data, age=form.age.data)
+        # studObj.name = form.name
+        # studObj.email = form.email
+        # studObj.age = 44
+        db.session.add(studObj)
+        db.session.commit()
+        return 'Form Successfully Submitted!'
+    return render_template('addStudent.html', form=form)
 
-    mary = Student(name='Mary', email="mary@weber.edu", age=22)
-    nickname_1 = StudentNickName(nick_name="Maria")
-    mary.student_nick_names.append(nickname_1)
-    db.session.add(mary)
-    db.session.commit()
+    # joe = Student(name='Joe',email="joe@weber.edu",age=21)
+    # db.session.add(joe)
+    # db.session.commit()
+    #
+    # mary = Student(name='Mary', email="mary@weber.edu", age=22)
+    # nickname_1 = StudentNickName(nick_name="Maria")
+    # mary.student_nick_names.append(nickname_1)
+    # db.session.add(mary)
+    # db.session.commit()
+    #
+    #
+    # message = "Student named Joe and Mary added to DB)"
+    # return render_template('index.html', message=message)
 
+@app.route('/add_students_with_nn_option', methods={'GET','POST'})
+def add_students_with_nn_option():
+    form = StudentForm()
 
-    message = "Student named Joe and Mary added to DB)"
-    return render_template('index.html', message=message)
+    if form.add_nickname.data:
+        form.student_nick_names.append_entry()
+        return render_template('add_stud_w_nn.html', form=form)
+    if form.validate_on_submit():
+        print("dddddddd", form.name, form.email, form.age, form.student_nick_names.data)
+        studObj = Student(name=form.name.data, email=form.email.data, age=form.age.data)
+        for nickname in form.student_nick_names.data:
+            print('XXXXXXXXXXXXXXXXXXXX:', nickname['nick_name'], type(nickname['nick_name']))
+            nicknameObj = StudentNickName(nick_name=nickname['nick_name'])
+            # mary.student_nick_names.append(nickname_1)
+            studObj.student_nick_names.append(nicknameObj)
+        # studObj.name = form.name
+        # studObj.email = form.email
+        # studObj.age = 44
+        db.session.add(studObj)
+        db.session.commit()
+        flash('Student Added!!')
+        # return 'Form Successfully Submitted!'
+        return redirect(url_for('home_page'))
+    return render_template('add_stud_w_nn.html', form=form)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = ParentForm()
+
+    if form.add_child.data:
+        form.children.append_entry()
+        return render_template('register.html', form=form)
+
+    if form.validate_on_submit():
+        return "Yabba dabba do!!!!"
+
+    return render_template('register.html', form=form)
 
 @app.route('/add_nicknames_to_student')
 def add_nicknames_to_student():
