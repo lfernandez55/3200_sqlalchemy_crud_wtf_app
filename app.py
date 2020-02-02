@@ -162,10 +162,15 @@ def update_student():
         studObj.name=form.name.data
         studObj.email=form.email.data
         studObj.age=form.age.data
-        studObj.student_nick_names = []
+        # Begin code for *updating* studObj.student_nick_names (rather than appending to it)
+        # There should be a way to update the existing children objects rather than deleting and readding them
+        # But in the below we delete and re-add.  Otherwise updated children simply append to existing children list
+        for i in range(len(studObj.student_nick_names)):
+            db.session.delete(studObj.student_nick_names[i])
         for nickname in form.student_nick_names.data:
             nicknameObj = StudentNickName(nick_name=nickname['nick_name'])
             studObj.student_nick_names.append(nicknameObj)
+        # End code for *updating*....
         db.session.add(studObj)
         db.session.commit()
         flash('Student Updated!!')
