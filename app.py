@@ -287,15 +287,26 @@ def add_courses():
 @app.route('/enroll_students', methods=['GET', 'POST'])
 def enroll_students():
     studObj = Student.query.filter(Student.id == 1).first()
-    # form = StudentForm(studObj)
     form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=studObj.courses )
+
+    # Begin: populate the field that allows the user to select from a list of courses
     coursesCollection = Course.query.all()
     courses_list = []
     for course in coursesCollection:
         courses_list.append(course.name)
     course_choices = list(enumerate(courses_list,start=1))
     form.courses.choices = course_choices
+    # End
 
+    # Begin: select the courses that the student is already enrolled in
+    default_list = []
+    for course in studObj.courses:
+        default_list.append(str(course.id))
+    print("This is the default list:::::", default_list)
+    form.courses.default = default_list
+    # form.courses.default = ['1','2'] #TODO Set this dynamically by getting the user's enrollements (studObj.courses)
+    print('DDDDDDDDDDDDDDDD::::::::', studObj.courses)
+    form.process()
     # states = State.query.all()
     # state_names = []
     # for state in states:
