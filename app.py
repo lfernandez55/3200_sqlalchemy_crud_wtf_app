@@ -2,7 +2,7 @@ from flask import Flask, render_template, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 from flask_wtf import Form, FlaskForm
-from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField
+from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField, HiddenField
 from wtforms.validators import InputRequired
 
 app = Flask(__name__)
@@ -84,13 +84,13 @@ def email_at_check(form, field):
         raise ValidationError('Email must contain an @')
 def email_unique(form, field):
     stud = Student.query.filter(Student.email == field.data).first()
-    print('zzzzzz',stud)
-    if stud is not None:
+    print('zzzzzz',form.id.data)
+    if stud is not None and stud.id is not form.id.data:
         print("raising validation error email not unique")
         raise ValidationError('Not a unique email address')
 
 class StudentForm(Form):
-    id = IntegerField('id')
+    id = HiddenField('id')
     name = StringField('name', validators=[InputRequired()])
     email = StringField('email', validators=[InputRequired(), email_at_check, email_unique])
     age = IntegerField('age', validators=[InputRequired()])
@@ -144,39 +144,17 @@ def drop_all():
 
 @app.route('/add_students', methods={'GET','POST'})
 def add_students():
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
     form = StudentForm()
     # the following field is not used in the form.  it has to be deleted
     # otherwise a validation error will be thrown see
     # https://wtforms.readthedocs.io/en/2.1/specific_problems.html#removing-fields-per-instance
     del form.student_nick_names
-    print("Valid?", form.validate_on_submit())
     if form.validate_on_submit():
-        print('DDDDDDDDEEEEEEEBBBBBBBUUUUUUGGGGGG', 0/1)
-        print("dddddddd", form.name, form.email, form.age)
         studObj = Student(name=form.name.data, email=form.email.data, age=form.age.data)
-        # studObj.name = form.name
-        # studObj.email = form.email
-        # studObj.age = 44
         db.session.add(studObj)
         db.session.commit()
         return 'Form Successfully Submitted!'
-    print("at end of addStudent.....")
     return render_template('addStudent.html', form=form)
-
-    # joe = Student(name='Joe',email="joe@weber.edu",age=21)
-    # db.session.add(joe)
-    # db.session.commit()
-    #
-    # mary = Student(name='Mary', email="mary@weber.edu", age=22)
-    # nickname_1 = StudentNickName(nick_name="Maria")
-    # mary.student_nick_names.append(nickname_1)
-    # db.session.add(mary)
-    # db.session.commit()
-    #
-    #
-    # message = "Student named Joe and Mary added to DB)"
-    # return render_template('index.html', message=message)
 
 @app.route('/add_students_with_nn_option', methods={'GET','POST'})
 def add_students_with_nn_option():
@@ -189,20 +167,13 @@ def add_students_with_nn_option():
         form.student_nick_names.pop_entry()
         return render_template('add_stud_w_nn.html', form=form)
     if form.validate_on_submit():
-        print("dddddddd", form.name, form.email, form.age, form.student_nick_names.data)
         studObj = Student(name=form.name.data, email=form.email.data, age=form.age.data)
         for nickname in form.student_nick_names.data:
-            print('XXXXXXXXXXXXXXXXXXXX:', nickname['nick_name'], type(nickname['nick_name']))
             nicknameObj = StudentNickName(nick_name=nickname['nick_name'])
-            # mary.student_nick_names.append(nickname_1)
             studObj.student_nick_names.append(nicknameObj)
-        # studObj.name = form.name
-        # studObj.email = form.email
-        # studObj.age = 44
         db.session.add(studObj)
         db.session.commit()
         flash('Student Added!!')
-        # return 'Form Successfully Submitted!'
         return redirect(url_for('home_page'))
     return render_template('add_stud_w_nn.html', form=form)
 
@@ -232,14 +203,36 @@ def add_nicknames_to_student():
     message = "Two nicknames added to Joe"
     return render_template('index.html', message=message)
 
-@app.route('/update_student')
+@app.route('/update_student', methods=['GET', 'POST'])
 def update_student():
-    joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    joe.name = 'Joseph'
-    db.session.add(joe)
-    db.session.commit()
-    message = "Student Updated"
-    return render_template('index.html', message=message)
+    studObj = Student.query.filter(Student.id == 1).first()
+    # form = StudentForm(studObj)
+    form = StudentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, student_nick_names=studObj.student_nick_names)
+    if form.add_nickname.data:
+        form.student_nick_names.append_entry()
+        return render_template('update_student.html', form=form)
+    if form.remove_nickname.data:
+        form.student_nick_names.pop_entry()
+        return render_template('update_student.html', form=form)
+    if form.validate_on_submit():
+        studObj.name=form.name.data
+        studObj.email=form.email.data
+        studObj.age=form.age.data
+        studObj.student_nick_names = []
+        for nickname in form.student_nick_names.data:
+            nicknameObj = StudentNickName(nick_name=nickname['nick_name'])
+            studObj.student_nick_names.append(nicknameObj)
+        db.session.add(studObj)
+        db.session.commit()
+        flash('Student Updated!!')
+        return redirect(url_for('home_page'))
+    return render_template('update_student.html', form=form)
+    # joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
+    # joe.name = 'Joseph'
+    # db.session.add(joe)
+    # db.session.commit()
+    # message = "Student Updated"
+    # return render_template('index.html', message=message)
 
 
 @app.route('/select_student')
