@@ -1,8 +1,8 @@
 from flask import Flask, render_template, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
-from flask_wtf import Form, FlaskForm
-from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField, HiddenField, SelectMultipleField
+from flask_wtf import FlaskForm #Form is deprecated, use FlaskForm instead
+from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField, HiddenField, SelectMultipleField, widgets
 from wtforms.validators import InputRequired
 
 app = Flask(__name__)
@@ -71,7 +71,7 @@ class StudentNickName(db.Model):
 
 #Forms Section
 
-class StudentNickNameForm(Form):
+class StudentNickNameForm(FlaskForm):
     id = IntegerField('id')
     nick_name = StringField('nick_name')
     class Meta:
@@ -80,16 +80,13 @@ class StudentNickNameForm(Form):
 
 def email_at_check(form, field):
     if '@' not in field.data:
-        print("raising validation error email does not contain @")
         raise ValidationError('Email must contain an @')
 def email_unique(form, field):
     stud = Student.query.filter(Student.email == field.data).first()
-    print('zzzzzz',form.id.data)
     if stud is not None and stud.id is not form.id.data:
-        print("raising validation error email not unique")
         raise ValidationError('Not a unique email address')
 
-class StudentForm(Form):
+class StudentForm(FlaskForm):
     id = HiddenField('id')
     name = StringField('name', validators=[InputRequired()])
     email = StringField('email', validators=[InputRequired(), email_at_check, email_unique])
@@ -104,13 +101,11 @@ class StudentForm(Form):
     submit = SubmitField()
 
 
-class StudentEnrollmentForm(Form):
+class StudentEnrollmentForm(FlaskForm):
     id = HiddenField('id')
-    name = StringField('name')
-    email = StringField('email')
-    age = IntegerField('age')
-    # courses = SelectMultipleField('Enrollments', choices=[('1', '1'), ('2', '2')])
-    # state_select_field = wtforms.SelectField(label="State", coerce=int)
+    name = HiddenField('name')
+    email = HiddenField('email')
+    age = HiddenField('age')
     courses = SelectMultipleField(label='Enrollments', coerce=int)
     submit = SubmitField()
 
@@ -206,7 +201,6 @@ def register():
 @app.route('/add_nicknames_to_student')
 def add_nicknames_to_student():
     joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    print(joe.name)
     nickname_1 = StudentNickName(nick_name="Jojo")
     nickname_2 = StudentNickName(nick_name="Joey")
     joe.student_nick_names.append(nickname_1)
@@ -219,7 +213,6 @@ def add_nicknames_to_student():
 @app.route('/update_student', methods=['GET', 'POST'])
 def update_student():
     studObj = Student.query.filter(Student.id == 1).first()
-    # form = StudentForm(studObj)
     form = StudentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, student_nick_names=studObj.student_nick_names)
     if form.add_nickname.data:
         form.student_nick_names.append_entry()
@@ -240,13 +233,6 @@ def update_student():
         flash('Student Updated!!')
         return redirect(url_for('home_page'))
     return render_template('update_student.html', form=form)
-    # joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    # joe.name = 'Joseph'
-    # db.session.add(joe)
-    # db.session.commit()
-    # message = "Student Updated"
-    # return render_template('index.html', message=message)
-
 
 @app.route('/select_student')
 def select_student():
@@ -288,78 +274,32 @@ def add_courses():
 def enroll_students():
     studObj = Student.query.filter(Student.id == 1).first()
 
-    default_list = []
+    # form.courses needs to be populated with the student's current enrollments
+    stud_current_enrollments = []
     for course in studObj.courses:
-         default_list.append(str(course.id))
-    print("This is the default list:::::", default_list)
+         stud_current_enrollments.append(str(course.id))
 
-    # form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=studObj.courses )
-    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=['1','2'])
-    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=['1'])
-    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=default_list)
-    # Begin: populate the field that allows the user to select from a list of courses
+    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=stud_current_enrollments)
+
+    # form.courses.choices needs to be populated with the entire list of courses that the student can choose from
     coursesCollection = Course.query.all()
     courses_list = []
     for course in coursesCollection:
         courses_list.append(course.name)
     course_choices = list(enumerate(courses_list,start=1))
     form.courses.choices = course_choices
-    # End
 
-    print("YYYYYYYYYYYYYYYYYYYYYYYY:::::::", studObj.courses)
-    # Begin: select the courses that the student is already enrolled in
-    # default_list = []
-    # for course in studObj.courses:
-    #     default_list.append(str(course.id))
-    # print("This is the default list:::::", default_list)
-    # form.courses.default = default_list
-    # # form.courses.default = ['1','2'] #TODO Set this dynamically by getting the user's enrollements (studObj.courses)
-    # print('DDDDDDDDDDDDDDDD::::::::', studObj.courses)
-    # form.process()
-    # form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age,
-    #                              courses=studObj.courses)
-    #maybe use process_data method above?
-
-
-    # states = State.query.all()
-    # state_names = []
-    # for state in states:
-    #     state_names.append(state.state_name)
-    # #choices need to come in the form of a list comprised of enumerated lists
-    # #example [('cpp', 'C++'), ('py', 'Python'), ('text', 'Plain Text')]
-    # state_choices = list(enumerate(state_names,start=1))
-    print("this is probably false::::", form.validate_on_submit())
     if form.validate_on_submit():
 
-        # studObj.courses=form.courses.data
-        print("form.courses.data:::::", form.courses.data)
         studObj.courses = []
         for course_id in form.courses.data:
             courseObj = Course.query.filter(Course.id == course_id).first()
             studObj.courses.append(courseObj)
-        # studObj.courses.append = [('1','Anthro 1000')]
         db.session.add(studObj)
         db.session.commit()
         flash('Students Enrollments Updated!!')
         return redirect(url_for('home_page'))
     return render_template('enroll_students.html', form=form)
-
-# @app.route('/enroll_students')
-# def enroll_students():
-#     anthro = Course.query.filter(Course.name == 'Anthro 1000').first()
-#     english = Course.query.filter(Course.name == 'English 1100').first()
-#     joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-#     mary = Student.query.filter(Student.email == 'mary@weber.edu').first()
-#     anthro.students.append(joe)
-#     english.students.append(joe)
-#     anthro.students.append(mary)
-#     db.session.add(anthro)
-#     db.session.add(english)
-#
-#     db.session.commit()
-#     message = "Two courses added to DB"
-#     return render_template('index.html', message=message)
-
 
 @app.route('/show_course_enrollments')
 def show_course_enrollments():
@@ -372,10 +312,6 @@ def show_course_enrollments():
 @app.route('/show_student_enrollments')
 def show_student_enrollments():
     studObj = Student.query.filter(Student.id == 1).first()
-    if studObj is None:
-        print('none type object')
-    else:
-        print('Not none')
     courses = ""
     for course in studObj.courses:
         courses = courses + str(course.name) +  ","
