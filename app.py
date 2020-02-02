@@ -287,8 +287,16 @@ def add_courses():
 @app.route('/enroll_students', methods=['GET', 'POST'])
 def enroll_students():
     studObj = Student.query.filter(Student.id == 1).first()
-    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=studObj.courses )
 
+    default_list = []
+    for course in studObj.courses:
+         default_list.append(str(course.id))
+    print("This is the default list:::::", default_list)
+
+    # form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=studObj.courses )
+    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=['1','2'])
+    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=['1'])
+    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=default_list)
     # Begin: populate the field that allows the user to select from a list of courses
     coursesCollection = Course.query.all()
     courses_list = []
@@ -298,15 +306,21 @@ def enroll_students():
     form.courses.choices = course_choices
     # End
 
+    print("YYYYYYYYYYYYYYYYYYYYYYYY:::::::", studObj.courses)
     # Begin: select the courses that the student is already enrolled in
-    default_list = []
-    for course in studObj.courses:
-        default_list.append(str(course.id))
-    print("This is the default list:::::", default_list)
-    form.courses.default = default_list
-    # form.courses.default = ['1','2'] #TODO Set this dynamically by getting the user's enrollements (studObj.courses)
-    print('DDDDDDDDDDDDDDDD::::::::', studObj.courses)
-    form.process()
+    # default_list = []
+    # for course in studObj.courses:
+    #     default_list.append(str(course.id))
+    # print("This is the default list:::::", default_list)
+    # form.courses.default = default_list
+    # # form.courses.default = ['1','2'] #TODO Set this dynamically by getting the user's enrollements (studObj.courses)
+    # print('DDDDDDDDDDDDDDDD::::::::', studObj.courses)
+    # form.process()
+    # form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age,
+    #                              courses=studObj.courses)
+    #maybe use process_data method above?
+
+
     # states = State.query.all()
     # state_names = []
     # for state in states:
@@ -319,6 +333,7 @@ def enroll_students():
 
         # studObj.courses=form.courses.data
         print("form.courses.data:::::", form.courses.data)
+        studObj.courses = []
         for course_id in form.courses.data:
             courseObj = Course.query.filter(Course.id == course_id).first()
             studObj.courses.append(courseObj)
