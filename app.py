@@ -73,18 +73,20 @@ class StudentNickName(db.Model):
 
 class StudentNickNameForm(Form):
     id = IntegerField('id')
-    nick_name = StringField('nick_name', validators=[InputRequired()])
+    nick_name = StringField('nick_name')
     class Meta:
         # No need for csrf token in this child form
         csrf = False
 
 def email_at_check(form, field):
     if '@' not in field.data:
+        print("raising validation error email does not contain @")
         raise ValidationError('Email must contain an @')
 def email_unique(form, field):
     stud = Student.query.filter(Student.email == field.data).first()
     print('zzzzzz',stud)
     if stud is not None:
+        print("raising validation error email not unique")
         raise ValidationError('Not a unique email address')
 
 class StudentForm(Form):
@@ -94,7 +96,8 @@ class StudentForm(Form):
     age = IntegerField('age', validators=[InputRequired()])
     # student_nick_names = StringField('student_nick_names', validators=[InputRequired()])
     student_nick_names = FieldList(FormField(StudentNickNameForm), label='Nicknames', min_entries=1)
-    add_nickname = SubmitField(label='Add More Nicknames')
+    add_nickname = SubmitField(label='Add Nicknames')
+    remove_nickname = SubmitField(label='Remove Last Nickname Entry')
 
     submit = SubmitField()
 
@@ -141,8 +144,15 @@ def drop_all():
 
 @app.route('/add_students', methods={'GET','POST'})
 def add_students():
+    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
     form = StudentForm()
+    # the following field is not used in the form.  it has to be deleted
+    # otherwise a validation error will be thrown see
+    # https://wtforms.readthedocs.io/en/2.1/specific_problems.html#removing-fields-per-instance
+    del form.student_nick_names
+    print("Valid?", form.validate_on_submit())
     if form.validate_on_submit():
+        print('DDDDDDDDEEEEEEEBBBBBBBUUUUUUGGGGGG', 0/1)
         print("dddddddd", form.name, form.email, form.age)
         studObj = Student(name=form.name.data, email=form.email.data, age=form.age.data)
         # studObj.name = form.name
@@ -151,6 +161,7 @@ def add_students():
         db.session.add(studObj)
         db.session.commit()
         return 'Form Successfully Submitted!'
+    print("at end of addStudent.....")
     return render_template('addStudent.html', form=form)
 
     # joe = Student(name='Joe',email="joe@weber.edu",age=21)
@@ -173,6 +184,9 @@ def add_students_with_nn_option():
 
     if form.add_nickname.data:
         form.student_nick_names.append_entry()
+        return render_template('add_stud_w_nn.html', form=form)
+    if form.remove_nickname.data:
+        form.student_nick_names.pop_entry()
         return render_template('add_stud_w_nn.html', form=form)
     if form.validate_on_submit():
         print("dddddddd", form.name, form.email, form.age, form.student_nick_names.data)
