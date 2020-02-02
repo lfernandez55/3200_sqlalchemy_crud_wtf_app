@@ -1,0 +1,30 @@
+{% from "_formhelpers.html" import render_field %}
+{% if form.errors %}
+    <ul class="errors">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+{% endif %}
+<form  method="post" id="parentForm">
+    {{ form.csrf_token }}
+    {# the above could also be: {{ form.hidden_tag() }} #}
+
+    <fieldset>
+        <legend>Student Info</legend>
+        {{form.id}}{{form.name}}{{form.email}}{{form.age}}
+        <div>Name: {{ form.name.data }}</div>
+        <div>Email: {{ form.email.data }}</div>
+        <div>Age: {{ form.age.data }}</div>
+
+    </fieldset>
+   <fieldset>
+    <legend>Enrollments</legend>
+    {{ form.courses.label }} {{ form.courses }}
+
+    </fieldset>
+
+    {{ form.submit }}
+</form>

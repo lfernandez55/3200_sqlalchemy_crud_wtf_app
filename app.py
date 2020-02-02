@@ -2,7 +2,7 @@ from flask import Flask, render_template, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 from flask_wtf import Form, FlaskForm
-from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField, HiddenField
+from wtforms import StringField, IntegerField, ValidationError, FieldList, FormField, SubmitField, HiddenField, SelectMultipleField
 from wtforms.validators import InputRequired
 
 app = Flask(__name__)
@@ -98,7 +98,20 @@ class StudentForm(Form):
     student_nick_names = FieldList(FormField(StudentNickNameForm), label='Nicknames', min_entries=1)
     add_nickname = SubmitField(label='Add Nicknames')
     remove_nickname = SubmitField(label='Remove Last Nickname Entry')
+    courses = SelectMultipleField('Enrollments', choices=[('1', '1'), ('2', '2')])
+    # country_select_field = wtforms.SelectField(label="Country", coerce=int)
 
+    submit = SubmitField()
+
+
+class StudentEnrollmentForm(Form):
+    id = HiddenField('id')
+    name = StringField('name')
+    email = StringField('email')
+    age = IntegerField('age')
+    # courses = SelectMultipleField('Enrollments', choices=[('1', '1'), ('2', '2')])
+    # state_select_field = wtforms.SelectField(label="State", coerce=int)
+    courses = SelectMultipleField(label='Enrollments', coerce=int)
     submit = SubmitField()
 
 
@@ -270,21 +283,56 @@ def add_courses():
     message = "Two courses added to DB"
     return render_template('index.html', message=message)
 
-@app.route('/enroll_students')
-def enroll_students():
-    anthro = Course.query.filter(Course.name == 'Anthro 1000').first()
-    english = Course.query.filter(Course.name == 'English 1100').first()
-    joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    mary = Student.query.filter(Student.email == 'mary@weber.edu').first()
-    anthro.students.append(joe)
-    english.students.append(joe)
-    anthro.students.append(mary)
-    db.session.add(anthro)
-    db.session.add(english)
 
-    db.session.commit()
-    message = "Two courses added to DB"
-    return render_template('index.html', message=message)
+@app.route('/enroll_students', methods=['GET', 'POST'])
+def enroll_students():
+    studObj = Student.query.filter(Student.id == 1).first()
+    # form = StudentForm(studObj)
+    form = StudentEnrollmentForm(id=studObj.id, name=studObj.name, email=studObj.email, age=studObj.age, courses=studObj.courses )
+    coursesCollection = Course.query.all()
+    courses_list = []
+    for course in coursesCollection:
+        courses_list.append(course.name)
+    course_choices = list(enumerate(courses_list,start=1))
+    form.courses.choices = course_choices
+
+    # states = State.query.all()
+    # state_names = []
+    # for state in states:
+    #     state_names.append(state.state_name)
+    # #choices need to come in the form of a list comprised of enumerated lists
+    # #example [('cpp', 'C++'), ('py', 'Python'), ('text', 'Plain Text')]
+    # state_choices = list(enumerate(state_names,start=1))
+    print("this is probably false::::", form.validate_on_submit())
+    if form.validate_on_submit():
+
+        # studObj.courses=form.courses.data
+        print("form.courses.data:::::", form.courses.data)
+        for course_id in form.courses.data:
+            courseObj = Course.query.filter(Course.id == course_id).first()
+            studObj.courses.append(courseObj)
+        # studObj.courses.append = [('1','Anthro 1000')]
+        db.session.add(studObj)
+        db.session.commit()
+        flash('Students Enrollments Updated!!')
+        return redirect(url_for('home_page'))
+    return render_template('enroll_students.html', form=form)
+
+# @app.route('/enroll_students')
+# def enroll_students():
+#     anthro = Course.query.filter(Course.name == 'Anthro 1000').first()
+#     english = Course.query.filter(Course.name == 'English 1100').first()
+#     joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
+#     mary = Student.query.filter(Student.email == 'mary@weber.edu').first()
+#     anthro.students.append(joe)
+#     english.students.append(joe)
+#     anthro.students.append(mary)
+#     db.session.add(anthro)
+#     db.session.add(english)
+#
+#     db.session.commit()
+#     message = "Two courses added to DB"
+#     return render_template('index.html', message=message)
 
 
 @app.route('/show_course_enrollments')
@@ -297,13 +345,13 @@ def show_course_enrollments():
 
 @app.route('/show_student_enrollments')
 def show_student_enrollments():
-    joe = Student.query.filter(Student.email == 'joe@weber.edu').first()
-    if joe is None:
+    studObj = Student.query.filter(Student.id == 1).first()
+    if studObj is None:
         print('none type object')
     else:
         print('Not none')
     courses = ""
-    for course in joe.courses:
+    for course in studObj.courses:
         courses = courses + str(course.name) +  ","
-    message = "Joe is enrolled in:<br> " + courses
+    message = "The student with id 1 is enrolled in:<br> " + courses
     return render_template('index.html', message=message)
